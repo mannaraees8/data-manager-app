@@ -46,6 +46,7 @@ const Home = () => {
         setData(activeData); // Update the local state with saved data
       } else {
         const error = await response.json();
+        console.log(error, "error");
         alert(`Failed to save data: ${error.error}`);
       }
     } catch (err) {
