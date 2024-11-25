@@ -3,8 +3,6 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-// Load API credentials from `apikeys.json`
-
 const CREDENTIALS = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
