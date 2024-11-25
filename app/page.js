@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const Home = () => {
   const [data, setData] = useState({});
@@ -8,11 +8,11 @@ const Home = () => {
   const [columns, setColumns] = useState({}); // Dynamic columns for each tab
   const [activeTab, setActiveTab] = useState(0); // Track the active tab index
 
-  // Fetch data from Google Drive on load
+  // Fetch data from JSON file on load
   useEffect(() => {
     const fetchData = async () => {
       const timestamp = new Date().getTime(); // Cache-busting
-      const response = await fetch(`/api/driveData?t=${timestamp}`);
+      const response = await fetch(`/app.json?t=${timestamp}`);
       const jsonData = await response.json();
       setData(jsonData);
       setKeys(Object.keys(jsonData)); // Extract keys for tabs
@@ -32,10 +32,11 @@ const Home = () => {
     return columns;
   };
 
-  // Save all data to Google Drive
+  // Save all data to the JSON file
   const saveData = async () => {
+    // await for 500ms then run?
     try {
-      const response = await fetch("/api/driveData", {
+      const response = await fetch("/api/saveData", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(activeData), // Send the updated data
@@ -45,6 +46,7 @@ const Home = () => {
         setData(activeData); // Update the local state with saved data
       } else {
         const error = await response.json();
+        console.log(error, "error");
         alert(`Failed to save data: ${error.error}`);
       }
     } catch (err) {
@@ -78,7 +80,6 @@ const Home = () => {
     });
 
     // Save data after adding the row
-    saveData();
   };
 
   // Add a new column to a specific tab
@@ -103,7 +104,6 @@ const Home = () => {
       });
 
       // Save data after adding the column
-      saveData();
     }
   };
 
@@ -116,7 +116,6 @@ const Home = () => {
     });
 
     // Save data after deleting the row
-    saveData();
   };
 
   // Delete a column from a specific tab
@@ -138,7 +137,6 @@ const Home = () => {
     });
 
     // Save data after deleting the column
-    saveData();
   };
 
   // Delete a tab dynamically
@@ -152,7 +150,6 @@ const Home = () => {
     setActiveTab(0);
 
     // Save data after deleting the tab
-    saveData();
   };
 
   // Add a new sheet (tab) dynamically
@@ -177,13 +174,13 @@ const Home = () => {
       });
 
       // Save data after adding the tab
-      saveData();
     }
   };
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Manage Your Projects</h1>
+
       {/* Tabs Header */}
       <div className="flex gap-4 mb-4">
         {keys.map((key, index) => (
@@ -194,7 +191,7 @@ const Home = () => {
               activeTab === index ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}>
             {key
-              .split("_")
+              .split("_") // Split by underscore
               .map((word, index) => {
                 return index === 0
                   ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
