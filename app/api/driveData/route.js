@@ -4,15 +4,11 @@ import fs from "fs";
 import path from "path";
 
 // Load API credentials from `apikeys.json`
-const CREDENTIALS_PATH = path.join(process.cwd(), "apikey.json");
-console.log("CREDENTIALS_PATH:", CREDENTIALS_PATH);
 
-let CREDENTIALS;
-try {
-  CREDENTIALS = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf-8"));
-} catch (error) {
-  console.error("Error reading API credentials:", error);
-}
+const CREDENTIALS = {
+  client_email: process.env.GOOGLE_CLIENT_EMAIL,
+  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+};
 
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 const jwtClient = new google.auth.JWT(
