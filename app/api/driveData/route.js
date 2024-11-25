@@ -11,6 +11,7 @@ const CREDENTIALS = {
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 const jwtClient = new google.auth.JWT(
   CREDENTIALS.client_email,
+
   null,
   CREDENTIALS.private_key.replace(/\\n/g, "\n"),
   SCOPES
