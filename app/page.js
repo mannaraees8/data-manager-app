@@ -182,15 +182,15 @@ const Home = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 text-xs">
       <h1 className="text-2xl font-bold mb-4">Manage Your Projects</h1>
       {/* Tabs Header */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-4 mb-4 overflow-auto">
         {keys.map((key, index) => (
           <button
             key={key}
             onClick={() => setActiveTab(index)}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-4 py-2 rounded-md  ${
               activeTab === index ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}>
             {key
@@ -205,7 +205,7 @@ const Home = () => {
         ))}
         <button
           onClick={addTab}
-          className="bg-green-500 text-white px-6 py-2 rounded-md ml-4">
+          className="bg-green-500 text-white p-2 rounded-md ml-4">
           Add Tab
         </button>
       </div>
@@ -227,26 +227,28 @@ const Home = () => {
                   })
                   .join(" ")}
               </h2>
-              <button
-                onClick={() => addRow(keys[activeTab])}
-                className="bg-blue-500 text-white px-4 py-2 mb-3 rounded mr-5">
-                Add Row
-              </button>
-              <button
-                onClick={() => addColumn(keys[activeTab])}
-                className="bg-yellow-500 text-white px-6 py-2 mb-3 rounded mr-5">
-                Add Column
-              </button>
-              <button
-                onClick={saveData}
-                className="bg-green-500 text-white px-6 py-2 mt-4 rounded">
-                Save Changes
-              </button>
-              <button
-                onClick={() => deleteTab(keys[activeTab])}
-                className="bg-red-500 text-white px-6 py-2 mt-4 rounded ml-4">
-                Delete Tab
-              </button>
+              <div className="flex items-center my-1">
+                <button
+                  onClick={() => addRow(keys[activeTab])}
+                  className="bg-blue-500 text-white px-4  p-2 rounded mr-5">
+                  Add Row
+                </button>
+                <button
+                  onClick={() => addColumn(keys[activeTab])}
+                  className="bg-yellow-500 text-white px-6 p-2 rounded mr-5">
+                  Add Column
+                </button>
+                <button
+                  onClick={saveData}
+                  className="bg-green-500 text-white p-2 rounded">
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => deleteTab(keys[activeTab])}
+                  className="bg-red-500 text-white p-2 rounded ml-4">
+                  Delete Tab
+                </button>
+              </div>
             </div>
 
             {/* Table Content for Active Tab */}

@@ -1,8 +1,7 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 
+// Load API credentials from environment variables
 const CREDENTIALS = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
@@ -11,7 +10,6 @@ const CREDENTIALS = {
 const SCOPES = ["https://www.googleapis.com/auth/drive"];
 const jwtClient = new google.auth.JWT(
   CREDENTIALS.client_email,
-
   null,
   CREDENTIALS.private_key.replace(/\\n/g, "\n"),
   SCOPES
@@ -20,8 +18,13 @@ const jwtClient = new google.auth.JWT(
 const drive = google.drive({ version: "v3", auth: jwtClient });
 
 async function authenticateWithGoogle() {
-  await jwtClient.authorize();
-  console.log("Google Drive API authenticated successfully");
+  try {
+    await jwtClient.authorize();
+    console.log("Google Drive API authenticated successfully");
+  } catch (error) {
+    console.error("Error authenticating with Google API:", error);
+    throw error;
+  }
 }
 
 const getFileId = async () => {
