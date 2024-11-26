@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const Home = () => {
   const [data, setData] = useState({});
@@ -7,6 +7,7 @@ const Home = () => {
   const [activeData, setActiveData] = useState({}); // Active data for each tab
   const [columns, setColumns] = useState({}); // Dynamic columns for each tab
   const [activeTab, setActiveTab] = useState(0); // Track the active tab index
+  const inputRefs = useRef({});
 
   // Fetch data from Google Drive on load
   useEffect(() => {
@@ -181,6 +182,24 @@ const Home = () => {
     }
   };
 
+  const handleKeyDown = (e, rowIndex, colIndex, tabKey) => {
+    if (e.key === "Enter") {
+      const nextRowIndex = rowIndex + 1; // Move to the next row
+      const nextInput = inputRefs.current[tabKey]?.[nextRowIndex]?.[colIndex];
+
+      if (nextInput) {
+        nextInput.focus(); // Focus on the input in the next row
+      } else {
+        console.log("No more rows available.");
+      }
+    }
+  };
+
+  const autoResize = (textarea) => {
+    textarea.style.height = "auto"; // Reset height to recalculate
+    textarea.style.height = `${textarea.scrollHeight}px`; // Adjust height to content
+  };
+
   return (
     <div className="p-4 text-xs">
       <h1 className="text-2xl font-bold mb-4">Manage Your Projects</h1>
@@ -255,6 +274,31 @@ const Home = () => {
             <div className="flex overflow-auto">
               <table className="table-auto w-full border-collapse border border-gray-300">
                 <thead>
+                  {/* Total Row */}
+                  <tr className="bg-gray-100 font-bold">
+                    {columns[keys[activeTab]]?.map((col) => {
+                      // Calculate the total for numeric columns
+                      const total = activeData[keys[activeTab]]?.reduce(
+                        (sum, row) => {
+                          const value = row[col];
+                          return isNaN(Number(value))
+                            ? sum
+                            : sum + Number(value);
+                        },
+                        0
+                      );
+
+                      return (
+                        <th
+                          key={`total-${col}`}
+                          className="border border-gray-300 px-4 py-2 min-w-[150px]">
+                          {isNaN(total) || total === 0 ? "" : total}
+                        </th>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Header Row */}
                   <tr>
                     {columns[keys[activeTab]]?.map((col) => (
                       <th
@@ -280,30 +324,82 @@ const Home = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {activeData[keys[activeTab]]?.map((row, index) => (
-                    <tr key={index}>
-                      {columns[keys[activeTab]]?.map((col) => (
-                        <td key={col} className="border border-gray-300 ">
+                  {activeData[keys[activeTab]]?.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {columns[keys[activeTab]]?.map((col, colIndex) => (
+                        <td key={col} className="border border-gray-300">
                           {col === "id" ? (
                             <span className="p-2">{row[col]}</span> // Read-only for ID field
                           ) : (
-                            <input
-                              type="text"
+                            <textarea
                               value={row[col]}
-                              onChange={(e) =>
+                              rows={3}
+                              onChange={(e) => {
                                 handleUpdate(
                                   keys[activeTab],
-                                  index,
+                                  rowIndex,
                                   col,
                                   e.target.value
-                                )
-                              }
-                              className="w-full p-2"
+                                );
+                                autoResize(e.target); // Automatically resize the textarea
+                              }}
+                              className="w-full p-2 resize-none overflow-hidden" // Disable manual resizing
+                              ref={(el) => {
+                                if (!inputRefs.current[keys[activeTab]]) {
+                                  inputRefs.current[keys[activeTab]] = []; // Initialize the tab array
+                                }
+                                if (
+                                  !inputRefs.current[keys[activeTab]][rowIndex]
+                                ) {
+                                  inputRefs.current[keys[activeTab]][rowIndex] =
+                                    []; // Initialize the row array
+                                }
+                                inputRefs.current[keys[activeTab]][rowIndex][
+                                  colIndex
+                                ] = el; // Assign the ref
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.ctrlKey && e.key === "Enter") {
+                                  e.preventDefault();
+                                  const target = e.target;
+                                  const cursorPosition = target.selectionStart;
+                                  const value = target.value;
+
+                                  // Insert a newline at the cursor position
+                                  const newValue =
+                                    value.slice(0, cursorPosition) +
+                                    "\n" +
+                                    value.slice(cursorPosition);
+                                  handleUpdate(
+                                    keys[activeTab],
+                                    rowIndex,
+                                    col,
+                                    newValue
+                                  );
+
+                                  // Update textarea value and caret position
+                                  setTimeout(() => {
+                                    target.value = newValue;
+                                    target.selectionStart =
+                                      target.selectionEnd = cursorPosition + 1;
+                                    autoResize(target);
+                                  }, 0);
+                                } else {
+                                  handleKeyDown(
+                                    e,
+                                    rowIndex,
+                                    colIndex,
+                                    keys[activeTab]
+                                  );
+                                }
+                              }}
                             />
                           )}
                           {col === "id" && (
                             <button
-                              onClick={() => deleteRow(keys[activeTab], index)}
+                              onClick={() =>
+                                deleteRow(keys[activeTab], rowIndex)
+                              }
                               className="ml-2 text-red-500">
                               X
                             </button>
