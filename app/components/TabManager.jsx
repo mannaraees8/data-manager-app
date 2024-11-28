@@ -8,6 +8,7 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
   const [activeData, setActiveData] = useState(data); // Active data for each tab
   const [activeTab, setActiveTab] = useState(0); // Track the active tab index
   const inputRefs = useRef({});
+  const [searchQuery, setSearchQuery] = useState("");
   const [columns, setColumns] = useState(
     Object.fromEntries(
       keys.map((key) => [key, Object.keys(data[key]?.[0] || {})])
@@ -79,8 +80,6 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
         ...activeData,
         [tabKey]: updatedTabData,
       });
-
-      saveData();
     }
   };
 
@@ -90,8 +89,6 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
       ...activeData,
       [tabKey]: updatedTabData,
     });
-
-    saveData();
   };
 
   const deleteColumn = (tabKey, col) => {
@@ -110,8 +107,6 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
       ...activeData,
       [tabKey]: updatedTabData,
     });
-
-    saveData();
   };
 
   const deleteTab = (tabKey) => {
@@ -122,8 +117,6 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
     setKeys(updatedKeys);
     setActiveData(updatedData);
     setActiveTab(0);
-
-    saveData();
   };
 
   const addTab = () => {
@@ -158,6 +151,12 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
+  const filteredRows =
+    activeData[keys[activeTab]]?.filter((row) =>
+      columns[keys[activeTab]].some((col) =>
+        String(row[col]).toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    ) || [];
 
   return (
     <div className="p-4 text-xs">
@@ -168,16 +167,15 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
           <button
             key={key}
             onClick={() => setActiveTab(index)}
-            className={`px-4 py-2 rounded-md  ${
+            className={`px-4 py-2 rounded-md ${
               activeTab === index ? "bg-blue-500 text-white" : "bg-gray-200"
             }`}>
             {key
               .split("_")
-              .map((word, index) => {
-                return index === 0
-                  ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                  : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-              })
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
               .join(" ")}
           </button>
         ))}
@@ -185,6 +183,22 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
           onClick={addTab}
           className="bg-green-500 text-white p-2 rounded-md ml-4">
           Add Tab
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-4 relative  w-full max-w-[420px] bg-[#eee]">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="p-2 border rounded-md w-full max-w-[400px] bg-[#eee]"
+        />
+        <button
+          className="text-xl absolute right-2"
+          onClick={() => setSearchQuery("")}>
+          &times;
         </button>
       </div>
 
@@ -196,19 +210,16 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
               <h2 className="text-xl font-bold mb-2">
                 {keys[activeTab]
                   .split("_")
-                  .map((word, index) => {
-                    return index === 0
-                      ? word.charAt(0).toUpperCase() +
-                          word.slice(1).toLowerCase()
-                      : word.charAt(0).toUpperCase() +
-                          word.slice(1).toLowerCase();
-                  })
+                  .map(
+                    (word) =>
+                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  )
                   .join(" ")}
               </h2>
               <div className="flex items-center my-1">
                 <button
                   onClick={() => addRow(keys[activeTab])}
-                  className="bg-blue-500 text-white px-4  p-2 rounded mr-5">
+                  className="bg-blue-500 text-white px-4 p-2 rounded mr-5">
                   Add Row
                 </button>
                 <button
@@ -235,147 +246,147 @@ const TabManager = ({ initialData, keys: initialKeys }) => {
                 <thead>
                   {/* Total Row */}
                   <tr className="bg-gray-100 font-bold">
+                    <th className="border border-gray-300 px-4 py-2 min-w-[50px]">
+                      Sr No.
+                    </th>
                     {columns[keys[activeTab]]?.map((col) => {
-                      // Calculate the total for numeric columns
+                      if (col === "id") return null; // Hide ID column
                       const total = activeData[keys[activeTab]]?.reduce(
-                        (sum, row) => {
-                          const value = row[col];
-                          return isNaN(Number(value))
+                        (sum, row) =>
+                          isNaN(Number(row[col]))
                             ? sum
-                            : sum + Number(value);
-                        },
+                            : sum + Number(row[col]),
                         0
                       );
-
-                      return col != "id" ? (
+                      return (
                         <th
                           key={`total-${col}`}
                           className="border border-gray-300 px-4 py-2 min-w-[150px]">
                           {isNaN(total) || total === 0 ? "" : total}
                         </th>
-                      ) : (
-                        <th></th>
                       );
                     })}
                   </tr>
-
                   {/* Header Row */}
                   <tr>
-                    {columns[keys[activeTab]]?.map((col) => (
-                      <th
-                        key={col}
-                        className="border border-gray-300 px-4 py-2 min-w-[150px]">
+                    <th className="border border-gray-300 px-4 py-2 min-w-[50px]">
+                      Sr No.
+                    </th>
+                    {columns[keys[activeTab]]?.map((col) =>
+                      col === "id" ? null : (
+                        <th
+                          key={col}
+                          className="border border-gray-300 px-4 py-2 min-w-[150px]">
+                          <div className="flex items-center justify-center">
+                            {col
+                              .split("_")
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() +
+                                  word.slice(1).toLowerCase()
+                              )
+                              .join(" ")}
+                            <button
+                              onClick={() => deleteColumn(keys[activeTab], col)}
+                              className="ml-2 text-red-500 text-xl">
+                              &times;
+                            </button>
+                          </div>
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      <td className="border border-gray-300 px-2 py-1 text-center">
                         <div className="flex items-center justify-center">
-                          {col
-                            .split("_")
-                            .map((word, index) => {
-                              return index === 0
-                                ? word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase()
-                                : word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase();
-                            })
-                            .join(" ")}
+                          {rowIndex + 1}
                           <button
-                            onClick={() => deleteColumn(keys[activeTab], col)}
+                            onClick={() => deleteRow(keys[activeTab], rowIndex)}
                             className="ml-2 text-red-500 text-xl">
                             &times;
                           </button>
                         </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeData[keys[activeTab]]?.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {columns[keys[activeTab]]?.map((col, colIndex) => (
-                        <td key={col} className="border border-gray-300">
-                          <div className="flex items-center">
-                            {col === "id" && (
-                              <button
-                                onClick={() =>
-                                  deleteRow(keys[activeTab], rowIndex)
+                      </td>
+                      {columns[keys[activeTab]]?.map((col, colIndex) =>
+                        col === "id" ? null : (
+                          <td
+                            key={col}
+                            className="border border-gray-300 px-2 py-1">
+                            <textarea
+                              value={row[col]}
+                              rows={3}
+                              onChange={(e) => {
+                                handleUpdate(
+                                  keys[activeTab],
+                                  rowIndex,
+                                  col,
+                                  e.target.value
+                                );
+                                autoResize(e.target);
+                              }}
+                              className="w-full p-2 resize-none overflow-hidden text-start align-top"
+                              ref={(el) => {
+                                if (!inputRefs.current[keys[activeTab]]) {
+                                  inputRefs.current[keys[activeTab]] = [];
                                 }
-                                className="ml-2 text-red-500 text-xl">
-                                &times;
-                              </button>
-                            )}
-                            {col === "id" ? (
-                              <span className="p-2">{row[col]}</span> // Read-only for ID field
-                            ) : (
-                              <textarea
-                                value={row[col]}
-                                rows={3}
-                                onChange={(e) => {
+                                if (
+                                  !inputRefs.current[keys[activeTab]][rowIndex]
+                                ) {
+                                  inputRefs.current[keys[activeTab]][rowIndex] =
+                                    [];
+                                }
+                                inputRefs.current[keys[activeTab]][rowIndex][
+                                  colIndex
+                                ] = el;
+                              }}
+                              onKeyDown={(e) => {
+                                if (
+                                  e.key === "Enter" &&
+                                  !e.shiftKey &&
+                                  !e.ctrlKey
+                                ) {
+                                  e.preventDefault();
+                                  handleKeyDown(
+                                    e,
+                                    rowIndex,
+                                    colIndex,
+                                    keys[activeTab]
+                                  );
+                                } else if (
+                                  (e.ctrlKey && e.key === "Enter") ||
+                                  (e.shiftKey && e.key === "Enter")
+                                ) {
+                                  e.preventDefault();
+                                  const target = e.target;
+                                  const cursorPosition = target.selectionStart;
+                                  const value = target.value;
+
+                                  const newValue =
+                                    value.slice(0, cursorPosition) +
+                                    "\n" +
+                                    value.slice(cursorPosition);
                                   handleUpdate(
                                     keys[activeTab],
                                     rowIndex,
                                     col,
-                                    e.target.value
+                                    newValue
                                   );
-                                  autoResize(e.target); // Automatically resize the textarea
-                                }}
-                                className="w-full p-2 resize-none overflow-hidden" // Disable manual resizing
-                                ref={(el) => {
-                                  if (!inputRefs.current[keys[activeTab]]) {
-                                    inputRefs.current[keys[activeTab]] = []; // Initialize the tab array
-                                  }
-                                  if (
-                                    !inputRefs.current[keys[activeTab]][
-                                      rowIndex
-                                    ]
-                                  ) {
-                                    inputRefs.current[keys[activeTab]][
-                                      rowIndex
-                                    ] = []; // Initialize the row array
-                                  }
-                                  inputRefs.current[keys[activeTab]][rowIndex][
-                                    colIndex
-                                  ] = el; // Assign the ref
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.ctrlKey && e.key === "Enter") {
-                                    e.preventDefault();
-                                    const target = e.target;
-                                    const cursorPosition =
-                                      target.selectionStart;
-                                    const value = target.value;
 
-                                    // Insert a newline at the cursor position
-                                    const newValue =
-                                      value.slice(0, cursorPosition) +
-                                      "\n" +
-                                      value.slice(cursorPosition);
-                                    handleUpdate(
-                                      keys[activeTab],
-                                      rowIndex,
-                                      col,
-                                      newValue
-                                    );
-
-                                    // Update textarea value and caret position
-                                    setTimeout(() => {
-                                      target.value = newValue;
-                                      target.selectionStart =
-                                        target.selectionEnd =
-                                          cursorPosition + 1;
-                                      autoResize(target);
-                                    }, 0);
-                                  } else {
-                                    handleKeyDown(
-                                      e,
-                                      rowIndex,
-                                      colIndex,
-                                      keys[activeTab]
-                                    );
-                                  }
-                                }}
-                              />
-                            )}
-                          </div>
-                        </td>
-                      ))}
+                                  setTimeout(() => {
+                                    target.value = newValue;
+                                    target.selectionStart =
+                                      target.selectionEnd = cursorPosition + 1;
+                                    autoResize(target);
+                                  }, 0);
+                                }
+                              }}
+                            />
+                          </td>
+                        )
+                      )}
                     </tr>
                   ))}
                 </tbody>
